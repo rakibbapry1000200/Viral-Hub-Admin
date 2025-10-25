@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitle">Admin Panel - Content Management</title>
+    
+    <style>
+        /* --- Base & Utility Styles (Dark Theme) - CLEAN & FULLSCREEN --- */
+        :root {
+            --primary-color: #e50914; 
+            --secondary-color: #00bcd4; 
+            --bg-color: #1a1a1a; 
+            --card-bg: #121212; 
+            --text-color: #ffffff; 
+            --text-muted: #888; 
+            --danger-color: #dc3545; 
+            --success-color: #28a745; 
+            --border-color: #3a3a3a; 
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0 0 80px 0; 
+            min-height: 100vh; 
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- LOGIN PAGE STYLES --- */
+        .login-container {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--bg-color);
+            padding: 20px;
+        }
+        .login-box {
+            background-color: var(--card-bg);
+            padding: 40px 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 400px;
+        }
+        .login-box h2 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 25px;
+            font-weight: 500;
+        }
+
+        /* --- MAIN ADMIN PANEL STYLES --- */
+        #adminPanel {
+            display: none;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+        
+        h1 {
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--primary-color);
+            padding: 20px 20px 10px 20px;
+            margin: 0;
+            background-color: #0d0d0d; 
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        }
+
+        .container {
+            width: 100%;
+            margin: 0 auto;
+            padding: 0;
+            flex-grow: 1;
+        }
+
+        .admin-section {
+            margin: 20px; 
+            padding: 20px;
+            border: 1px solid var(--border-color); 
+            border-radius: 8px;
+            background: var(--card-bg); 
+        }
+        
+        .master-section {
+            padding: 0; 
+            display: none; 
+        }
+        
+        .master-section.active {
+            display: block; 
+        }
+
+        /* Form, Button, List Styles */
+        .form-group { margin-bottom: 15px; }
+        label { color: #fff; display: block; margin-bottom: 5px; font-weight: 600; }
+        input[type="text"], input[type="password"], input[type="email"], textarea, select {
+            width: 100%; padding: 12px; border: 1px solid var(--border-color); 
+            border-radius: 5px; font-size: 16px; box-sizing: border-box;
+            background-color: #333; 
+            color: var(--text-color);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input:focus, textarea:focus, select:focus {
+             border-color: var(--secondary-color);
+        }
+
+        /* General Button Styles (Icon-Focused) */
+        .btn-icon {
+            padding: 10px; 
+            min-height: 40px; 
+            min-width: 40px; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px; 
+            transition: background-color 0.2s;
+            margin-right: 10px; 
+            text-decoration: none; 
+            font-weight: 500;
+        }
+        .btn-icon svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+            display: block;
+        }
+
+        /* Specific Button Colors */
+        .btn-primary-icon { background-color: var(--primary-color); color: white; }
+        .btn-primary-icon:hover { background-color: #c90812; }
+        
+        .btn-danger-icon { background-color: var(--danger-color); color: white; }
+        .btn-danger-icon:hover { background-color: #b22232; }
+        
+        .btn-edit-icon { background-color: #ffc107; color: var(--card-bg); }
+        .btn-edit-icon:hover { background-color: #e0a800; color: var(--card-bg); }
+        
+        .btn-slider-icon { background-color: var(--secondary-color); color: var(--card-bg); }
+        .btn-slider-icon:hover { background-color: #008fa0; }
+        
+        /* Form Button Layout */
+        #videoUploadForm .btn-icon, #sliderUploadForm .btn-icon, #loginForm button { 
+            width: auto; 
+            padding: 10px 15px; 
+        }
+        #videoUploadForm .btn-icon svg, #sliderUploadForm .btn-icon svg { 
+            margin-right: 5px;
+            width: 18px; 
+            height: 18px;
+        }
+
+        /* Message Box */
+        .alert-message {
+            padding: 15px; margin: 20px; border-radius: 5px; font-weight: bold;
+            border: 1px solid transparent; 
+        }
+        .alert-success { background-color: #1e392a; color: var(--success-color); border-color: var(--success-color); }
+        .alert-error { background-color: #4a1f22; color: var(--danger-color); border-color: var(--danger-color); }
+        .alert-error-login { margin-top: 15px; background-color: #4a1f22; color: var(--danger-color); border-color: var(--danger-color); }
+        
+        /* --- Footer Styles (Updated for 3 items) --- */
+        .admin-footer {
+            position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-around;
+            background-color: var(--card-bg);
+            z-index: 1000; padding: 8px 0; border-top: 1px solid var(--border-color); 
+        }
+
+        .admin-footer .footer-item {
+            display: flex; flex-direction: column; align-items: center; padding: 5px;
+            color: var(--text-muted); text-decoration: none; transition: color 0.3s;
+            width: 33.3%; /* Equal width for 3 items */
+        }
+
+        .admin-footer .footer-item.active {
+            color: var(--primary-color); 
+        }
+
+        .admin-footer .footer-item:hover {
+            color: var(--primary-color);
+        }
+
+        .admin-footer .footer-item svg {
+            width: 28px; height: 28px; margin-bottom: 2px; fill: currentColor;
+        }
+
+        .admin-footer .footer-item span {
+            font-size: 10px; font-weight: 600; text-align: center;
+        }
+        
+        /* --- Video/Slider List/Grid Styles (Unchanged) --- */
+        .search-container { margin-bottom: 20px; }
+        .filter-row { display: flex; gap: 15px; margin-bottom: 20px; }
+        .filter-row .form-group { flex: 1; margin-bottom: 0; }
+        .autocomplete-container { position: relative; } /* Added for proper positioning */
+        .autocomplete-suggestions {
+            position: absolute; z-index: 10; max-height: 200px; overflow-y: auto;
+            border: 1px solid var(--border-color); background-color: var(--card-bg);
+            border-top: none; width: 100%; border-radius: 0 0 5px 5px; left: 0; top: 100%; margin-top: -1px; 
+        }
+        .autocomplete-suggestions div { padding: 10px; cursor: pointer; border-bottom: 1px solid #222; font-size: 0.9em; }
+        .autocomplete-suggestions div:hover, .autocomplete-suggestions .autocomplete-active { background-color: #333; color: var(--primary-color); }
+
+        .video-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; padding: 10px 0;
+        }
+        .video-card { background-color: #2e2e2e; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); }
+        .video-card-thumb { width: 100%; height: 100px; object-fit: cover; display: block; }
+        .video-card-info { padding: 10px; }
+        .video-card-title { font-size: 0.9em; font-weight: 600; margin: 0 0 5px 0; height: 2.4em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+        .video-card-actions { display: flex; justify-content: space-between; margin-top: 10px; }
+        .video-card-actions .btn-icon { width: 32px; height: 32px; padding: 0; border-radius: 4px; }
+        
+        .content-list { margin-top: 20px; display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; }
+        .list-item { width: 100%; max-width: 400px; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; background: #2e2e2e; }
+        .item-thumbnail { width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; display: block; }
+        .item-actions-slider { display: flex; justify-content: flex-end; align-items: center; padding: 8px; background-color: #1a1a1a; }
+        .item-actions-slider .btn-icon { width: 32px; height: 32px; padding: 0; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    
+    <div id="loginPage" class="login-container">
+        <div class="login-box">
+            <h2>Admin Login</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail">Email:</label>
+                    <input type="email" id="loginEmail" required placeholder="Enter admin email">
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password:</label>
+                    <input type="password" id="loginPassword" required placeholder="Enter password">
+                </div>
+                <button type="submit" class="btn-icon btn-primary-icon" style="width: 100%; margin-right: 0; margin-top: 15px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 17h-2v-4H7V7h10v6h-4zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>
+                    <span>Login</span>
+                </button>
+                <div id="loginError" class="alert-error-login" style="display:none;"></div>
+            </form>
+        </div>
+    </div>        
+            <div class="master-section active" id="videoMasterSection">
+                <div class="admin-section">
+                    <h2>Upload Video</h2>
+                    <form id="videoUploadForm">
+                        <input type="hidden" id="videoKey" value="">
+                        
+                        <div class="form-group autocomplete-container">
+                            <label for="videoCategoryInput">Category:</label>
+                            <input type="text" id="videoCategoryInput" required placeholder="Type or select a category (e.g., TikTok Viral, New Movie)">
+                            <div id="categorySuggestions" class="autocomplete-suggestions" style="display: none;"></div>
+                        </div>
+
+                        <div class="form-group"><label for="videoTitle">Title:</label><input type="text" id="videoTitle" required></div>
+                        <div class="form-group"><label for="videoDescription">Description: </label><textarea id="videoDescription" rows="3" required></textarea></div>
+                        <div class="form-group"><label for="videoEmbedLink">Video Embed Link (YouTube/iFrame):</label><input type="text" id="videoEmbedLink" required></div>
+                        
+                        <div class="form-group"><label for="videoDownloadLink">Download Link (Optional):</label><input type="text" id="videoDownloadLink" placeholder="Leave blank if no direct download is available"></div>
+                        
+                        <div class="form-group"><label for="videoThumbnailURL">Thumbnail URL:</label><input type="text" id="videoThumbnailURL" required></div>
+
+                        <button type="submit" class="btn-icon btn-primary-icon" id="videoUploadBtn">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1 16H8v-1h8v1zm1-4H7V8h10v7zm-5-1l-2-2-2 2h4z"/></svg>
+                            <span>Upload</span>
+                        </button>
+                        <button type="button" class="btn-icon btn-danger-icon" id="videoCancelEditBtn" style="display:none;">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.29 14.29c.39.39.39 1.02 0 1.41-.39.39-1.02.39-1.41 0L12 13.41l-2.88 2.88c-.39.39-1.02.39-1.41 0-.39-.39-.39-1.02 0-1.41L10.59 12 7.71 9.12c-.39-.39-.39-1.02 0-1.41.39-.39 1.02-.39 1.41 0L12 10.59l2.88-2.88c.39-.39 1.02-.39 1.41 0 .39.39.39 1.02 0 1.41z"/></svg>
+                            <span>Cancel</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="master-section" id="listMasterSection">
+                <div class="admin-section">
+                    <h2>Video List</h2>
+                    
+                    <div class="search-container">
+                        <label for="videoSearchInput">Search Video by Title:</label>
+                        <input type="text" id="videoSearchInput" placeholder="Type video name...">
+                        <div id="autocompleteSuggestions" class="autocomplete-suggestions" style="display: none;">
+                            </div>
+                    </div>
+
+                    <div class="filter-row">
+                        <div class="form-group">
+                            <label for="listCategoryFilter">Filter by Category:</label>
+                            <select id="listCategoryFilter" onchange="filterAndRenderVideoGrid()">
+                                <option value="All">All Categories</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="video-grid" id="videoGrid">
+                        <p style="color:var(--text-muted);">Loading videos...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="master-section" id="sliderMasterSection">
+                <div class="admin-section">
+                    <h2>Upload Slider</h2>
+                    <form id="sliderUploadForm">
+                        <input type="hidden" id="sliderKey" value="">
+
+                        <div class="form-group"><label for="sliderDescription">Title (Optional):</label><input type="text" id="sliderDescription" placeholder="Slider/Ad title (optional)" value=""></div>
+                        
+                        <div class="form-group"><label for="sliderClickURL">Clickable Link (Optional):</label><input type="text" id="sliderClickURL" placeholder="Slider will not be clickable if link is empty"></div>
+                        
+                        <div class="form-group"><label for="sliderThumbnailURL">Slider Image URL:</label><input type="text" id="sliderThumbnailURL" required></div>
+                        
+                        <div class="form-group checkbox-group">
+                            <label for="sliderClickable">
+                                <input type="checkbox" id="sliderClickable" disabled> 
+                                Slider is Clickable
+                                <span style="font-size:0.8em; color:var(--text-muted); margin-left:10px;">(Active if a URL is provided)</span>
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn-icon btn-slider-icon" id="sliderUploadBtn">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                            <span>Upload</span>
+                        </button>
+                        <button type="button" class="btn-icon btn-danger-icon" id="sliderCancelEditBtn" style="display:none;">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.29 14.29c.39.39.39 1.02 0 1.41-.39.39-1.02.39-1.41 0L12 13.41l-2.88 2.88c-.39.39-1.02.39-1.41 0-.39-.39-.39-1.02 0-1.41L10.59 12 7.71 9.12c-.39-.39-.39-1.02 0-1.41.39-.39 1.02-.39 1.41 0L12 10.59l2.88-2.88c.39-.39 1.02-.39 1.41 0 .39.39.39 1.02 0 1.41z"/></svg>
+                            <span>Cancel</span>
+                        </button>
+                    </form>
+                </div>
+                
+                <div class="admin-section">
+                    <h2>Slider List (Thumbnail View)</h2>
+                    <div class="content-list" id="sliderList">
+                        <p>Loading sliders...</p>
+                    </div>
+                </div>
+            </div>
+
+        </div> 
+        
+        <div class="admin-footer">
+            <a href="#" class="footer-item active" id="footer-video" data-target="videoMasterSection">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H7V5h10v14zM12 7c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+                <span>Video Upload</span>
+            </a>
+            <a href="#" class="footer-item" id="footer-list" data-target="listMasterSection">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zm0-8h14V7H7v2z"/></svg>
+                <span>Video List</span>
+            </a>
+            <a href="#" class="footer-item" id="footer-slider" data-target="sliderMasterSection">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-4.75-9.25c.69 0 1.25-.56 1.25-1.25s-.56-1.25-1.25-1.25-1.25.56-1.25 1.25.56 1.25 1.25 1.25zm9.5 0c.69 0 1.25-.56 1.25-1.25s-.56-1.25-1.25-1.25-1.25.56-1.25 1.25.56 1.25 1.25 1.25z"/></svg>
+                <span>Sliders</span>
+            </a>
+        </div>
+    </div>
+
+
+    <script type="module">
+        // --- Firebase V9 Modular Imports ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+        import { getDatabase, ref, onValue, set, push, remove, update, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+
+        // --- Firebase Configuration & Setup (YOUR CONFIG) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBwgMG6fOHbI43bNkB6ZwylvBDmt7Kr7Hk",
+            authDomain: "service-59f79.firebaseapp.com",
+            databaseURL: "https://service-59f79-default-rtdb.firebaseio.com",
+            projectId: "service-59f79",
+            storageBucket: "service-59f79.firebasestorage.app",
+            messagingSenderId: "893383656987",
+            appId: "1:893383656987:web:32d37e8bbf7ede8a17dabe",
+            measurementId: "G-4ZC155ZC6L"
+        };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const database = getDatabase(app);
+        
+        // --- Separate Firebase References ---
+        const videosRef = ref(database, 'videos');
+        const slidersRef = ref(database, 'sliders');
+
+        // --- Global Data Storage ---
+        let allVideosArray = []; 
+        let allSlidersArray = []; 
+        let allCategories = new Set(); // To store all unique categories
+        let currentFocus = -1; 
+
+        // --- DOM Elements ---
+        const loginPage = document.getElementById('loginPage');
+        const adminPanel = document.getElementById('adminPanel');
+        const loginForm = document.getElementById('loginForm');
+        const loginError = document.getElementById('loginError');
+        const messageBox = document.getElementById('message');
+
+        // Video Form Elements
+        const videoUploadForm = document.getElementById('videoUploadForm');
+        const videoUploadBtn = document.getElementById('videoUploadBtn');
+        const videoCancelEditBtn = document.getElementById('videoCancelEditBtn');
+        const videoCategoryInput = document.getElementById('videoCategoryInput'); 
+        const categorySuggestionsDiv = document.getElementById('categorySuggestions'); 
+        
+        // List Section Elements
+        const listCategoryFilter = document.getElementById('listCategoryFilter');
+        const videoGridContainer = document.getElementById('videoGrid');
+        
+        // Search/Autocomplete Elements (List Section)
+        const videoSearchInput = document.getElementById('videoSearchInput');
+        const autocompleteSuggestions = document.getElementById('autocompleteSuggestions');
+        
+        // **🚨 FIX: Added a check for element existence before calling .style/innerHTML**
+        function closeAllSuggestions() {
+            if (autocompleteSuggestions) {
+                autocompleteSuggestions.innerHTML = '';
+                autocompleteSuggestions.style.display = 'none';
+                currentFocus = -1;
+            }
+        }
+        
+        function handleSuggestionNavigation(event) {
+            // Simplified handler to prevent errors
+            closeAllSuggestions(); 
+        }
+        
+        // Set event listener for search input
+        if (videoSearchInput) {
+             videoSearchInput.addEventListener('keydown', handleSuggestionNavigation);
+        }
+        
+        // --- Utility & UI Functions ---
+        
+        function showMessage(msg, type = 'success') {
+            if (!messageBox) return; // Safety check
+            messageBox.textContent = msg;
+            messageBox.className = `alert-message alert-${type}`;
+            messageBox.style.display = 'block';
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+            }, 5000);
+        }
+        
+        function syncSliderClickable() {
+            const clickUrlInput = document.getElementById('sliderClickURL');
+            const clickableCheckbox = document.getElementById('sliderClickable');
+            if (!clickUrlInput || !clickableCheckbox) return;
+
+            const hasLink = clickUrlInput.value.trim().length > 0;
+            clickableCheckbox.checked = hasLink;
+            clickableCheckbox.disabled = !hasLink;
+        }
+
+        if (document.getElementById('sliderClickURL')) {
+            document.getElementById('sliderClickURL').addEventListener('input', syncSliderClickable);
+        }
+
+        function resetVideoForm() {
+            videoUploadForm.reset();
+            document.getElementById('videoKey').value = '';
+            videoUploadBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1 16H8v-1h8v1zm1-4H7V8h10v7zm-5-1l-2-2-2 2h4z"/></svg><span>Upload</span>';
+            videoCancelEditBtn.style.display = 'none';
+            closeUploadCategorySuggestions();
+        }
+        
+        function resetSliderForm() {
+            sliderUploadForm.reset();
+            document.getElementById('sliderKey').value = '';
+            document.getElementById('sliderUploadBtn').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg><span>Upload</span>';
+            document.getElementById('sliderCancelEditBtn').style.display = 'none';
+            syncSliderClickable(); 
+        }
+
+        function fillVideoFormForEdit(video) {
+            switchTab('videoMasterSection'); 
+            
+            document.getElementById('videoKey').value = video.key;
+            videoCategoryInput.value = video.category || ''; 
+            document.getElementById('videoTitle').value = video.title || '';
+            document.getElementById('videoDescription').value = video.description || '';
+            document.getElementById('videoEmbedLink').value = video.embedLink || '';
+            document.getElementById('videoDownloadLink').value = video.downloadLink || ''; 
+            document.getElementById('videoThumbnailURL').value = video.thumbnailURL || '';
+
+            videoUploadBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14 10V4.5L19.5 10M5 3C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V9L15 3H5Z"/></svg><span>Update</span>';
+            videoCancelEditBtn.style.display = 'inline-block';
+            window.scrollTo({ top: document.getElementById('videoMasterSection').offsetTop, behavior: 'smooth' });
+        }
+        
+        function fillSliderFormForEdit(slider) {
+            switchTab('sliderMasterSection'); 
+            document.getElementById('sliderKey').value = slider.key;
+            document.getElementById('sliderDescription').value = slider.description || '';
+            document.getElementById('sliderClickURL').value = slider.clickURL || '';
+            document.getElementById('sliderThumbnailURL').value = slider.thumbnailURL || '';
+            syncSliderClickable(); 
+
+            document.getElementById('sliderUploadBtn').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14 10V4.5L19.5 10M5 3C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V9L15 3H5Z"/></svg><span>Update</span>';
+            document.getElementById('sliderCancelEditBtn').style.display = 'inline-block';
+            window.scrollTo({ top: document.getElementById('sliderMasterSection').offsetTop, behavior: 'smooth' });
+        }
+        
+        // 🚨 Global Edit Function (Accessible from inline HTML)
+        window.editContent = function(type, key) {
+            if (type === 'video') {
+                const videoToEdit = allVideosArray.find(v => v.key === key);
+                if (videoToEdit) {
+                    fillVideoFormForEdit(videoToEdit);
+                } else {
+                    showMessage('Video not found in current list.', 'error');
+                }
+            } else if (type === 'slider') {
+                const sliderToEdit = allSlidersArray.find(s => s.key === key);
+                if (sliderToEdit) {
+                    fillSliderFormForEdit(sliderToEdit);
+                } else {
+                    showMessage('Slider not found in current list.', 'error');
+                }
+            }
+        };
+
+        // 🚨 Global Delete Operations (Accessible from inline HTML)
+        window.deleteVideo = function(key, title) {
+            if (confirm(`Are you sure you want to permanently delete the video: "${title}"?`)) {
+                remove(ref(database, `videos/${key}`)).then(() => {
+                    showMessage('Video successfully deleted.', 'success');
+                }).catch(error => {
+                    showMessage(`Delete failed: ${error.message}`, 'error');
+                });
+            }
+        };
+        
+        window.deleteSlider = function(key, title) {
+            if (confirm(`Are you sure you want to permanently delete the slider: "${title}"?`)) {
+                remove(ref(database, `sliders/${key}`)).then(() => {
+                    showMessage('Slider successfully deleted.', 'success');
+                }).catch(error => {
+                    showMessage(`Delete failed: ${error.message}`, 'error');
+                });
+            }
+        };
+
+
+        // --- Authentication Logic ---
+        if (loginForm) {
+            loginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+                
+                if (loginError) loginError.style.display = 'none';
+
+                signInWithEmailAndPassword(auth, email, password)
+                    .then((userCredential) => {
+                        // Logged in successfully
+                    })
+                    .catch((error) => {
+                        const errorMessage = error.message.replace('Firebase: Error (auth/', '').replace(').', '').replace(/-/g, ' ');
+                        if (loginError) {
+                            loginError.textContent = `Login failed: ${errorMessage}`;
+                            loginError.style.display = 'block';
+                        }
+                    });
+            });
+        }
+
+        // Auth State Observer - Main UI Switch
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                if (loginPage) loginPage.style.display = 'none';
+                if (adminPanel) adminPanel.style.display = 'flex';
+                startDataListeners();
+            } else {
+                if (adminPanel) adminPanel.style.display = 'none';
+                if (loginPage) loginPage.style.display = 'flex';
+                const passInput = document.getElementById('loginPassword');
+                if (passInput) passInput.value = '';
+            }
+        });
+
+
+        // --- CRUD Operations ---
+
+        // 1. VIDEO UPLOAD/EDIT
+        if (videoUploadForm) {
+            videoUploadForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const videoKey = document.getElementById('videoKey').value;
+                const category = videoCategoryInput.value.trim();
+
+                if (!category) {
+                    showMessage('Category is required.', 'error');
+                    return;
+                }
+
+                const videoData = {
+                    category: category, 
+                    title: document.getElementById('videoTitle').value,
+                    description: document.getElementById('videoDescription').value,
+                    embedLink: document.getElementById('videoEmbedLink').value,
+                    downloadLink: document.getElementById('videoDownloadLink').value.trim(), 
+                    thumbnailURL: document.getElementById('videoThumbnailURL').value,
+                    timestamp: serverTimestamp() 
+                };
+                
+                let actionPromise;
+                if (videoKey) {
+                    actionPromise = update(ref(database, `videos/${videoKey}`), videoData);
+                } else {
+                    actionPromise = push(videosRef, videoData);
+                }
+
+                actionPromise.then(() => {
+                    // Update categories immediately for autocomplete
+                    allCategories.add(category); 
+                    updateCategoryLists(); 
+                    
+                    showMessage(`Video successfully ${videoKey ? 'updated' : 'uploaded'}.`, 'success');
+                    resetVideoForm();
+                    
+                    if (!videoKey) {
+                        switchTab('listMasterSection'); 
+                    }
+                }).catch(error => {
+                    showMessage(`Video ${videoKey ? 'update' : 'upload'} failed: ${error.message}`, 'error');
+                });
+            });
+        }
+        if (videoCancelEditBtn) {
+            videoCancelEditBtn.addEventListener('click', resetVideoForm);
+        }
+
+        // 2. SLIDER UPLOAD/EDIT
+        const sliderUploadFormElement = document.getElementById('sliderUploadForm');
+        if (sliderUploadFormElement) {
+            sliderUploadFormElement.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const sliderKey = document.getElementById('sliderKey').value;
+                const clickURL = document.getElementById('sliderClickURL').value.trim();
+                const isClickable = clickURL.length > 0;
+                
+                const sliderData = {
+                    description: document.getElementById('sliderDescription').value, 
+                    clickURL: clickURL, 
+                    thumbnailURL: document.getElementById('sliderThumbnailURL').value,
+                    clickable: isClickable ? 'true' : 'false', 
+                    timestamp: serverTimestamp() 
+                };
+
+                if (!sliderData.thumbnailURL) {
+                    showMessage('Slider Image URL is required!', 'error');
+                    return;
+                }
+                
+                let actionPromise;
+                if (sliderKey) {
+                    actionPromise = update(ref(database, `sliders/${sliderKey}`), sliderData);
+                } else {
+                    actionPromise = push(slidersRef, sliderData);
+                }
+
+                actionPromise.then(() => {
+                    showMessage(`Slider successfully ${sliderKey ? 'updated' : 'uploaded'}.`, 'success');
+                    resetSliderForm();
+                }).catch(error => {
+                    showMessage(`Slider ${sliderKey ? 'update' : 'upload'} failed: ${error.message}`, 'error');
+                });
+            });
+        }
+        if (document.getElementById('sliderCancelEditBtn')) {
+            document.getElementById('sliderCancelEditBtn').addEventListener('click', resetSliderForm);
+        }
+
+        // --- Data Rendering Logic ---
+        
+        function createVideoGridCard(video) {
+            const elementKey = video.key; 
+            const card = document.createElement('div');
+            card.className = 'video-card';
+            
+            const cleanTitle = video.title || 'No Title';
+            const escapedDeleteTitle = cleanTitle.replace(/'/g, "\\'");
+            
+            card.innerHTML = `
+                <img src="${video.thumbnailURL}" onerror="this.onerror=null;this.src='https://via.placeholder.com/200x112.png?text=No+Thumb';" alt="${cleanTitle}" class="video-card-thumb">
+                <div class="video-card-info">
+                    <h4 class="video-card-title">${cleanTitle}</h4>
+                    <p style="font-size: 0.8em; color: var(--primary-color); margin: 0 0 3px 0;">Category: ${video.category || 'N/A'}</p>
+                    <div class="video-card-actions">
+                        <button class="btn-icon btn-edit-icon" title="Edit (Upload Section)" onclick="editContent('video', '${elementKey}')">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                        </button>
+                        <button class="btn-icon btn-danger-icon" title="Delete" onclick="deleteVideo('${elementKey}', '${escapedDeleteTitle}')">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                        </button>
+                    </div>
+                </div>
+            `;
+            return card;
+        }
+
+        window.filterAndRenderVideoGrid = function(searchQuery = '') {
+            if (!videoGridContainer || !listCategoryFilter) return;
+
+            const selectedCategory = listCategoryFilter.value;
+            videoGridContainer.innerHTML = '';
+            
+            let videosToRender = allVideosArray.filter(video => 
+                selectedCategory === 'All' || video.category === selectedCategory
+            );
+            
+            if (searchQuery) {
+                const query = searchQuery.toLowerCase();
+                videosToRender = videosToRender.filter(video => 
+                    video.title && video.title.toLowerCase().includes(query)
+                );
+            }
+            
+            if (videosToRender.length === 0) {
+                 videoGridContainer.innerHTML = `<p style="color:var(--text-muted);">No videos found matching the criteria.</p>`;
+                 return;
+            }
+            
+            videosToRender.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)).forEach(video => {
+                videoGridContainer.appendChild(createVideoGridCard(video));
+            });
+        }
+        
+        function createSliderListItem(slider) {
+            const elementKey = slider.key; 
+            const listItem = document.createElement('div');
+            listItem.className = 'list-item';
+            
+            const cleanTitle = slider.description || 'No Title';
+            const escapedDeleteTitle = cleanTitle.replace(/'/g, "\\'");
+            
+            listItem.innerHTML = `
+                <img src="${slider.thumbnailURL}" onerror="this.onerror=null;this.src='https://via.placeholder.com/400x225.png?text=No+Slider+Image';" alt="${cleanTitle}" class="item-thumbnail">
+                <div class="item-actions-slider">
+                    <span style="flex-grow:1; font-size:0.9em; color:var(--text-color);">${cleanTitle}</span>
+                    <button class="btn-icon btn-edit-icon" title="Edit" onclick="editContent('slider', '${elementKey}')">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                    </button>
+                    <button class="btn-icon btn-danger-icon" title="Delete" onclick="deleteSlider('${elementKey}', '${escapedDeleteTitle}')">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                    </button>
+                </div>
+            `;
+            return listItem;
+        }
+
+        function renderSliderList(sliders) {
+            const listContainer = document.getElementById('sliderList');
+            if (!listContainer) return;
+            listContainer.innerHTML = '';
+            
+            if (sliders.length === 0) {
+                 listContainer.innerHTML = '<p style="color:var(--text-muted);">No sliders uploaded yet.</p>';
+                 return;
+            }
+
+            sliders.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)).forEach(slider => {
+                listContainer.appendChild(createSliderListItem(slider));
+            });
+        }
+        
+        // --- Category Autocomplete and Filter Dropdown Logic ---
+
+        function updateCategoryLists() {
+            if (!listCategoryFilter) return;
+
+            const currentFilter = listCategoryFilter.value; 
+            listCategoryFilter.innerHTML = '<option value="All">All Categories</option>';
+            const sortedCategories = Array.from(allCategories).sort();
+            
+            sortedCategories.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat;
+                option.textContent = cat;
+                listCategoryFilter.appendChild(option);
+            });
+            
+            if (listCategoryFilter.querySelector(`option[value="${currentFilter}"]`)) {
+                listCategoryFilter.value = currentFilter;
+            } else {
+                listCategoryFilter.value = 'All';
+            }
+
+            // Always re-render the grid after category list update
+            filterAndRenderVideoGrid(videoSearchInput.value || ''); 
+        }
+
+        function closeUploadCategorySuggestions() {
+            if (categorySuggestionsDiv) { 
+                categorySuggestionsDiv.innerHTML = '';
+                categorySuggestionsDiv.style.display = 'none';
+            }
+        }
+        
+        // Event listener for Category input in the Upload Form
+        if (videoCategoryInput) {
+            videoCategoryInput.addEventListener('input', function() {
+                const val = this.value;
+                closeUploadCategorySuggestions();
+                if (!val) return;
+                
+                const query = val.toLowerCase();
+                const suggestions = Array.from(allCategories)
+                                        .filter(cat => cat.toLowerCase().includes(query))
+                                        .sort();
+
+                suggestions.forEach(cat => {
+                    const suggestionDiv = document.createElement('div');
+                    suggestionDiv.innerHTML = cat;
+                    suggestionDiv.addEventListener('click', function() {
+                        videoCategoryInput.value = this.innerText;
+                        closeUploadCategorySuggestions();
+                    });
+                    if (categorySuggestionsDiv) categorySuggestionsDiv.appendChild(suggestionDiv);
+                });
+                
+                if (categorySuggestionsDiv && categorySuggestionsDiv.children.length > 0) {
+                     categorySuggestionsDiv.style.display = 'block';
+                }
+            });
+        }
+        
+        // Close on outside click
+        document.addEventListener('click', function (e) {
+            // Close Upload Category Suggestions
+            if (e.target !== videoCategoryInput && e.target.parentNode !== categorySuggestionsDiv) {
+                closeUploadCategorySuggestions();
+            }
+            // Close List Search Suggestions
+            if (e.target !== videoSearchInput && e.target.parentNode !== autocompleteSuggestions) {
+                closeAllSuggestions();
+            }
+        });
+
+
+        // --- Data Listeners (V9 Modular) ---
+        let videosListener;
+        let slidersListener;
+
+        function startDataListeners() {
+            if (videosListener) videosListener();
+            if (slidersListener) slidersListener();
+
+            // 1. Videos Listener
+            videosListener = onValue(videosRef, (snapshot) => {
+                const data = snapshot.val();
+                const videosArray = [];
+                allCategories.clear(); 
+
+                if (data) { 
+                    for (let key in data) { 
+                        if (data.hasOwnProperty(key)) { 
+                            const video = { key: key, ...data[key] };
+                            videosArray.push(video); 
+                            
+                            if (video.category) {
+                                allCategories.add(video.category);
+                            }
+                        } 
+                    }
+                }
+                
+                allVideosArray = videosArray; 
+                
+                updateCategoryLists(); // Updates filter dropdown & re-renders the grid
+
+            }, (error) => {
+                console.error("Video Data Load Failed:", error);
+                if (videoGridContainer) {
+                    videoGridContainer.innerHTML = '<p style="color:var(--danger-color);">Failed to load videos. Check console for details.</p>';
+                }
+            });
+
+            // 2. Sliders Listener
+            slidersListener = onValue(slidersRef, (snapshot) => {
+                const data = snapshot.val();
+                const slidersArray = [];
+                if (data) {
+                    for (let key in data) { 
+                        if (data.hasOwnProperty(key)) { 
+                            slidersArray.push({ key: key, ...data[key] }); 
+                        } 
+                    }
+                }
+                allSlidersArray = slidersArray; 
+                renderSliderList(slidersArray);
+            }, (error) => {
+                console.error("Slider Data Load Failed:", error);
+                const sliderListElement = document.getElementById('sliderList');
+                if(sliderListElement) sliderListElement.innerHTML = '<p style="color:var(--danger-color);">Failed to load sliders. Check console for details.</p>';
+            });
+        }
+        
+        // --- Footer Navigation Logic ---
+        const masterSections = document.querySelectorAll('.master-section');
+        const footerItems = document.querySelectorAll('.admin-footer .footer-item');
+        
+        function switchTab(targetId) {
+            masterSections.forEach(section => section.classList.remove('active'));
+            const targetSection = document.getElementById(targetId);
+            if(targetSection) targetSection.classList.add('active');
+            
+            footerItems.forEach(item => {
+                item.classList.remove('active');
+            });
+            const targetFooterItem = document.querySelector(`[data-target="${targetId}"]`);
+            if (targetFooterItem) {
+                 targetFooterItem.classList.add('active');
+            }
+            
+            resetVideoForm(); 
+            resetSliderForm();
+
+            if (targetId === 'listMasterSection') {
+                closeAllSuggestions();
+                // Ensure latest data and categories are used
+                updateCategoryLists(); 
+            }
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        footerItems.forEach(item => {
+            item.addEventListener('click', function (e) {
+                e.preventDefault();
+                switchTab(this.getAttribute('data-target'));
+            });
+        });
+
+        // Initial setup
+        syncSliderClickable(); 
+        // Initial tab load should happen after DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            switchTab('videoMasterSection');
+        });
+        
+        // **Making sure global window functions are set up**
+        window.filterAndRenderVideoGrid = filterAndRenderVideoGrid;
+    </script>
+</body>
+</html>
